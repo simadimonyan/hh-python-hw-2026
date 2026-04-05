@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 
 from app.users import User, ForeignUser, LocalUser
@@ -23,12 +24,34 @@ class Switchboard:
         self._active_calls: list[ActiveCall] = []
         self._cross_border_count: int = 0
 
+    def validate_user_id(self, user_id: str) -> int:
+        try:
+            user_id_int = int(user_id)
+        except ValueError as exc:
+            raise ValueError("Invalid user id: must be integer") from exc
+        return user_id_int
+
+    def validate_user_name(self, name: str) -> str:
+        stripped_name = name.strip()
+        if not stripped_name or stripped_name.isdigit():
+            raise ValueError("Invalid user name: must contain letters")
+        return stripped_name
+
+    def validate_phone(self, phone: str) -> str:
+        stripped_phone = phone.strip()
+        if not re.fullmatch(r"\+\d+", stripped_phone):
+            raise ValueError("Invalid phone format")
+        return stripped_phone
+
     def create_user(self, user_id: str, name: str, phone: str) -> User:
-        user_id_int = int(user_id)
-        if phone.startswith(LOCAL_PHONE_PREFIX):
-            return LocalUser(user_id_int, name, phone)
+        user_id_int = self.validate_user_id(user_id)
+        validated_name = self.validate_user_name(name)
+        validated_phone = self.validate_phone(phone)
+
+        if validated_phone.startswith(LOCAL_PHONE_PREFIX):
+            return LocalUser(user_id_int, validated_name, validated_phone)
         else:
-            return ForeignUser(user_id_int, name, phone)
+            return ForeignUser(user_id_int, validated_name, validated_phone)
 
     def register_call(self, raw_call: str) -> ActiveCall:
         '''

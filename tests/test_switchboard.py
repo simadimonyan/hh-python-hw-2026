@@ -71,6 +71,12 @@ def test_register_call_only_commas() -> None:
         switchboard.register_call(",,,,,")
 
 
+def test_register_call_invalid_format_numeric_fields() -> None:
+    switchboard = Switchboard()
+    with pytest.raises(ValueError):
+        switchboard.register_call("1,2,3,4,5,6")
+
+
 def test_register_call_missing_fields_middle() -> None:
     switchboard = Switchboard()
     with pytest.raises(ValueError):
